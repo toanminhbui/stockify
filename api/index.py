@@ -7,18 +7,20 @@ from groq import Groq
 import yfinance as yf
 from fastapi import FastAPI
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path='.env.local')
 # Install required libraries
 # pip install yfinance groq pandas matplotlib requests
 app = FastAPI()
 # Set up API keys (replace with your actual keys)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+NEWS_API_KEY = os.getenv('NEWS_API_KEY')
 
 class stockNews(BaseModel):
     ticker: str
-    newsType: str
+    newsType: str 
 # Initialize Groq client
-client = Groq(api_key=GROQ_API_KEY)
+client = Groq(api_key=os.getenv('GROQ_API_KEY'))
 
 def get_stock_data(symbol):
     try:
@@ -28,16 +30,52 @@ def get_stock_data(symbol):
     except Exception as e:
         print(f"Error fetching data for {symbol}: {e}")
         return None
+
+
+def analyze(symbol, summary):
+    data_for_analysis = f"""
+    Stock Symbol: {symbol}
+
+    Recent analyses:
+    {summary}
+
+    Please provide a brief analysis of the stock's market news.
+    """
+
+    try:
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an unbiased expert financial analyst providing insights on stock performance.",
+                },
+                {
+                    "role": "user",
+                    "content": data_for_analysis,
+                },
+            ],
+            model="mixtral-8x7b-32768",
+            temperature=0.5,
+            max_tokens=300,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        analysis = f"Could not retrieve analysis: {str(e)}"
+
 @app.get("/news")
-def get_news(symbol):
+def get_news(stock: stockNews):
+    symbol = stock.ticker
+    newsType = stock.newsType
     end_date = datetime.now()
     start_date = end_date - timedelta(days=7)
 
     # Create a more specific search query
     company_name = yf.Ticker(symbol).info.get('longName', symbol)
     query = f'"{symbol}" stock'
-
-    url = f"https://api.tickertick.com/feed?q=(and%20tt:{symbol}%20)&n=100"
+    specifiedType = ""
+    if newsType != "none":
+        specifiedType = f"%20T:{newsType}" 
+    url = f"https://api.tickertick.com/feed?q=(and%20tt:{symbol}%20{specifiedType})&n=100"
     response = requests.get(url)
     data = response.json()
     if "stories" not in data:
@@ -82,8 +120,13 @@ def analyze_stock(symbol: str):
     # plt.tight_layout()
     # chart_filename = f"{symbol}_stock_chart.png"
     # plt.close()
-
-    news = get_news(symbol)
+    stockData = stockNews(newsType="none", ticker=symbol)
+    marketData = stockNews(newsType="market", ticker=symbol)
+    
+    news = get_news(stockData)
+    market = get_news(marketData)
+    market_summary = news_summary = "\n".join([f"- {article['title']}" for article in market])
+    ai_market_analyze = analyze(symbol, market_summary)
     news_summary = "\n".join([f"- {article['title']}" for article in news])
     title = "\n".join([f"- {article['title']}" for article in news])
     print(news_summary)
@@ -127,5 +170,6 @@ def analyze_stock(symbol: str):
         "price_change": price_change,
         "percent_change": percent_change,
         "analysis": analysis,
+        "market_sentiment": ai_market_analyze,
     }
 
