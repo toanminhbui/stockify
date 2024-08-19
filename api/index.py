@@ -1,7 +1,6 @@
 import os
 import requests
 from datetime import datetime, timedelta
-import pandas as pd
 # import matplotlib.pyplot as plt
 from groq import Groq
 import yfinance as yf
