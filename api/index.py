@@ -92,7 +92,7 @@ def get_news(stock: stockNews):
     specifiedType = ""
     if newsType != "none":
         specifiedType = f"%20T:{newsType}" 
-    url = f"https://api.tickertick.com/feed?q=(and%20tt:{symbol}%20{specifiedType})&n=100"
+    url = f"https://api.tickertick.com/feed?q=(and%20tt:{symbol}%20{specifiedType})&n=10"
     response = requests.get(url)
     data = response.json()
     if "stories" not in data:
@@ -117,6 +117,8 @@ def get_news(stock: stockNews):
 
 
     return relevant_articles  # Return up to 5 relevant news articles
+
+
 @app.get("/api/analyze")
 def analyze_stock(symbol: str):
     df = get_stock_data(symbol)
@@ -139,14 +141,15 @@ def analyze_stock(symbol: str):
     # plt.close()
     stockData = stockNews(newsType="none", ticker=symbol)
     marketData = stockNews(newsType="market", ticker=symbol)
+    # SecData = stockNews(newsType="sec", ticker=symbol)
 
     news = get_news(stockData)
     market = get_news(marketData)
+    # sec = get_news(SecData)
     market_summary = news_summary = "\n".join([f"- {article['title']}" for article in market])
     ai_market_analyze = analyze(symbol, market_summary)
     news_summary = "\n".join([f"- {article['title']}" for article in news])
     title = "\n".join([f"- {article['title']}" for article in news])
-    print(news_summary)
     data_for_analysis = f"""
     Stock Symbol: {symbol}
     Current Price: ${current_price:.2f}
@@ -188,5 +191,6 @@ def analyze_stock(symbol: str):
         "percent_change": percent_change,
         "analysis": analysis,
         "market_sentiment": ai_market_analyze,
+        # "sec": sec
     }
 

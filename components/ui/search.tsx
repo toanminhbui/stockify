@@ -1,7 +1,7 @@
 'use client'
 import React, { ChangeEvent, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "./card";
 interface Stock {
     s: string;
     n: string;
@@ -23,6 +23,7 @@ interface StockAnalysis {
 }
 export default function SearchBar() {
   const [results, setResults] = useState<Stock[]>([]);
+  const [processing, setProcessing] = useState<boolean>(false);
   const [analyze, setAnalyst] = useState<StockAnalysis|null>(null);
   async function handleChange(event: ChangeEvent<HTMLTextAreaElement>) {
     const currentValue = event.target.value;
@@ -48,12 +49,16 @@ export default function SearchBar() {
 
   async function handleClick(symbol: string) {
     try {
+      setProcessing(true);
+      setResults([])
+      setAnalyst(null);
       const response = await fetch(`/api/analyze?symbol=${symbol}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       setAnalyst(data);
+      setProcessing(false);
       // Handle the response data as needed
     } catch (error) {
       console.error("There was a problem with the analysis fetch operation:", error);
@@ -76,8 +81,30 @@ export default function SearchBar() {
           ))}
         </ul>
       )}
+        {processing &&
+        (
+            <span>Please wait, analyst looking over news...</span>
+        )
+
+        }
       { analyze && (
-        <span>{analyze.analysis}</span>
+        <div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>{analyze.symbol} Stock Price</CardTitle>
+                    <CardDescription>Recent market movement</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col">
+                    <span>Current Price: {analyze.current_price}</span>
+                    <span>Price Change: {analyze.price_change}</span>
+                    <span>Percent Change: {analyze.percent_change}</span>
+                </CardContent>
+            </Card>
+            <h2 className="text-bold text-xl mt-10">Analyst Overview</h2>
+            <span>{analyze.analysis}</span>
+            <h2 className="text-bold text-xl mt-10">Market Sentiment Analysis</h2>
+            <span>{analyze.market_sentiment}</span>
+        </div>
       )}
     </div>
   );
