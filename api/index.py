@@ -8,6 +8,7 @@ import yfinance as yf
 from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv(dotenv_path='.env.local')
 # Install required libraries
@@ -16,6 +17,22 @@ app = FastAPI()
 # Set up API keys (replace with your actual keys)
 NEWS_API_KEY = os.getenv('NEWS_API_KEY')
 
+
+origins = [
+    "http://localhost:3000",  # React development server
+    # Your production domain
+    "https://smart-thoughts-mmm84xfit-toanminhbuis-projects.vercel.app/",
+    "https://smart-thoughts.vercel.app",
+    "https://smart-thoughts.vercel.app/brainstore",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 class stockNews(BaseModel):
     ticker: str
     newsType: str 
@@ -62,7 +79,7 @@ def analyze(symbol, summary):
     except Exception as e:
         analysis = f"Could not retrieve analysis: {str(e)}"
 
-@app.get("/news")
+@app.get("/api/news")
 def get_news(stock: stockNews):
     symbol = stock.ticker
     newsType = stock.newsType
@@ -100,7 +117,7 @@ def get_news(stock: stockNews):
 
 
     return relevant_articles  # Return up to 5 relevant news articles
-@app.get("/analyze")
+@app.get("/api/analyze")
 def analyze_stock(symbol: str):
     df = get_stock_data(symbol)
     if df is None or df.empty:
@@ -122,7 +139,7 @@ def analyze_stock(symbol: str):
     # plt.close()
     stockData = stockNews(newsType="none", ticker=symbol)
     marketData = stockNews(newsType="market", ticker=symbol)
-    
+
     news = get_news(stockData)
     market = get_news(marketData)
     market_summary = news_summary = "\n".join([f"- {article['title']}" for article in market])
