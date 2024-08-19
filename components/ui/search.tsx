@@ -67,10 +67,12 @@ export default function SearchBar() {
 
   return (
     <div>
+    <h1 className="text-3xl font-serif">WallStreet Corners</h1>
       <Textarea 
         onChange={handleChange} 
         id="stock" 
-        placeholder="search for some stocks"
+        placeholder="search up some publicly listed stocks"
+        className="font-serif"
       />
       {results.length > 0 && (
         <ul>
@@ -83,7 +85,7 @@ export default function SearchBar() {
       )}
         {processing &&
         (
-            <span>Please wait, analyst looking over news...</span>
+            <span>Please wait, analyst compiling news...</span>
         )
 
         }
