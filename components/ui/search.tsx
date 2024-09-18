@@ -78,7 +78,7 @@ export default function SearchBar() {
         <ul>
           {results.map((stock, index) => (
             <li key={index} onClick={() => handleClick(stock.s)}>
-              {stock.s} - {stock.n} ({stock.t})
+              {stock.s} - {stock.n} 
             </li>
           ))}
         </ul>
@@ -104,7 +104,7 @@ export default function SearchBar() {
             </Card>
             <h2 className="text-bold text-xl mt-10">Analyst Overview</h2>
             <span>{analyze.analysis}</span>
-            <h2 className="text-bold text-xl mt-10">Market Sentiment Analysis</h2>
+            <h2 className="text-bold text-xl mt-10">Market Movement Analysis</h2>
             <span>{analyze.market_sentiment}</span>
         </div>
       )}
