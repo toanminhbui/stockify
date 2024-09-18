@@ -185,9 +185,9 @@ def analyze_stock(symbol: str):
 
     return {
         "symbol": symbol,
-        "current_price": current_price,
-        "price_change": price_change,
-        "percent_change": percent_change,
+        "current_price": round(current_price,2),
+        "price_change": round(price_change,2),
+        "percent_change": round(percent_change,2),
         "analysis": analysis,
         "market_sentiment": ai_market_analyze,
         # "sec": sec
